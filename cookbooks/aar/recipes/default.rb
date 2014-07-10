@@ -11,15 +11,7 @@ service "apache2" do
   action [ :enable, :start ]
 end
 
-#
-# I noticed on the Digital Ocean machines I provisioned an error when
-# attempting to install the mysql-client and mysql-server. Particularlly
-# package instruction wanted a much higher version than then one I found
-# being offered when I attempted to install manually.
-#
-# ISSUE: Not Idempotent
-#
-execute "apt-get update"
+include_recipe "apt::default"
 
 package "mysql-client"
 package "mysql-server"
@@ -61,24 +53,21 @@ execute "mv /tmp/Awesome-Appliance-Repair-master/AAR /var/www" do
 end
 
 
-#
-# ISSUE: Not Idempotent
-#
-execute "chown -R www-data:www-data /var/www/AAR"
+execute "chown -R www-data:www-data /var/www/AAR" do
+  not_if do
+    owner = Mixlib::ShellOut.new("ls -ld /var/www/AAR | awk '{ print $3
+}' | tr -d '\n'")
+    owner.run_command
+    owner.stdout.eql? "www-data"
+  end
+end
+
 
 package "libapache2-mod-wsgi"
 package "python-pip"
 package "python-mysqldb"
 
-#
-# ISSUE: Not Idempotent
-#
-execute "pip install flask"
-
-#
-# ISSUE: Not Idempotent
-#
-execute "apachectl stop"
+python_pip "flask"
 
 #
 # This was copied directly from the existing script which found all the folders
@@ -104,6 +93,7 @@ install_directory = "/var/www/AAR"
 template "/etc/apache2/sites-enabled/AAR-apache.conf" do
   source "apache.conf.erb"
   variables :directory => install_directory
+  notifies :restart, "service[apache2]"
 end
 
 #
@@ -156,9 +146,3 @@ file "Database Script Run Complete" do
   notifies :run, "execute[Create Database User]"
   notifies :run, "execute[Grant User Privileges]"
 end
-
-
-#
-# ISSUE: Not Idempotent
-#
-execute "apachectl graceful"
