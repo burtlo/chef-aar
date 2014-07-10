@@ -17,8 +17,3 @@ directories.each do |name|
 
 end
 
-template "/etc/apache2/sites-enabled/AAR-apache.conf" do
-  source "apache.conf.erb"
-  variables :directory => node['aar']['install_path']
-  notifies :restart, "service[apache2]"
-end

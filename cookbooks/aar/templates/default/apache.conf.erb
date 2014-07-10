@@ -1,11 +1,11 @@
 <VirtualHost *:80>
   ServerName /
-  WSGIDaemonProcess /AAR user=www-data group=www-data threads=5
+  WSGIDaemonProcess /AAR user=<%= @user %> group=<%= @group %> threads=5
   WSGIProcessGroup /AAR
-  WSGIScriptAlias / /var/www/AAR/awesomeapp.wsgi
+  WSGIScriptAlias / <%= @install_path %>/awesomeapp.wsgi
 
 
-  <Directory <%= @directory %>>
+  <Directory <%= @install_path %>>
     WSGIApplicationGroup %{GLOBAL}
     WSGIScriptReloading On
     Order deny,allow
@@ -13,5 +13,5 @@
   </Directory>
 
   CustomLog ${APACHE_LOG_DIR}/access.log combined
-  ServerAdmin ops@example.com
+  ServerAdmin <%= @server_admin_email %>
 </VirtualHost>
