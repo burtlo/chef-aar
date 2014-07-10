@@ -29,10 +29,5 @@ execute "mv /tmp/Awesome-Appliance-Repair-master/AAR #{node['aar']['install_path
 end
 
 execute "chown -R www-data:www-data #{node['aar']['install_path']}" do
-  not_if do
-    owner = Mixlib::ShellOut.new("ls -ld #{node['aar']['install_path']} | awk '{ print $3
-}' | tr -d '\n'")
-    owner.run_command
-    owner.stdout.eql? "www-data"
-  end
+  not_if { user_owns_path?("www-data",node['aar']['install_path']) }
 end
