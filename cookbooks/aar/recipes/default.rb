@@ -30,7 +30,7 @@ package "unzip"
 #
 # ISSUE: Not a good measure of guard criteria
 #
-execute "wget https://github.com/colincam/Awesome-Appliance-Repair/archive/master.zip -O /tmp/master.zip" do
+execute "wget #{node['aar']['download_url']} -O /tmp/master.zip" do
   not_if { ::File.exist?("/tmp/master.zip") }
 end
 
@@ -47,15 +47,14 @@ end
 #
 # ISSUE: Magic Strings, Repitition, Brittle
 #
-execute "mv /tmp/Awesome-Appliance-Repair-master/AAR /var/www" do
+execute "mv /tmp/Awesome-Appliance-Repair-master/AAR #{node['aar']['install_path']}" do
   only_if { ::File.exist?("/tmp/Awesome-Appliance-Repair-master/AAR") }
-  not_if { ::File.exist?("/var/www/AAR") }
+  not_if { ::File.exist?(node['aar']['install_path']) }
 end
 
-
-execute "chown -R www-data:www-data /var/www/AAR" do
+execute "chown -R www-data:www-data #{node['aar']['install_path']}" do
   not_if do
-    owner = Mixlib::ShellOut.new("ls -ld /var/www/AAR | awk '{ print $3
+    owner = Mixlib::ShellOut.new("ls -ld #{node['aar']['install_path']} | awk '{ print $3
 }' | tr -d '\n'")
     owner.run_command
     owner.stdout.eql? "www-data"
@@ -88,7 +87,7 @@ directories.each do |name|
 
 end
 
-install_directory = "/var/www/AAR"
+install_directory = node['aar']['install_path']
 
 template "/etc/apache2/sites-enabled/AAR-apache.conf" do
   source "apache.conf.erb"
@@ -106,8 +105,8 @@ end
 #
 # ISSUE: Security
 #
-app_database_password = "app_database_password"
-secret_key = "secret_key"
+app_database_password = node['aar']['database_password']
+secret_key = node['aar']['secret_key']
 
 template "#{install_directory}/AAR_config.py" do
   source "AAR_config.py.erb"
@@ -115,6 +114,7 @@ template "#{install_directory}/AAR_config.py" do
     :secret_key => secret_key
 
 end
+
 
 
 #
